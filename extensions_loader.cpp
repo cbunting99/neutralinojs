@@ -17,6 +17,7 @@ using json = nlohmann::json;
 namespace extensions {
 
 vector<string> loadedExtensions;
+vector<int> extensionProcessIds; // Track extension process virtual PIDs
 bool initialized = false;
 
 json __buildExtensionProcessInput(const string &extensionId) {
@@ -58,6 +59,10 @@ void init() {
             };
             
             auto process = os::spawnProcess(command, processOptions);
+            
+            // Track the extension process ID for cleanup
+            extensionProcessIds.push_back(process.first);
+            
             os::updateSpawnedProcess({process.first, "stdIn", helpers::jsonToString(__buildExtensionProcessInput(extensionId))});
             os::updateSpawnedProcess({process.first, "stdInEnd"});
             
@@ -83,6 +88,22 @@ bool isLoaded(const string &extensionId) {
 
 bool isInitialized() {
     return initialized;
+}
+
+void cleanup() {
+    // Terminate all extension processes
+    for(int processId : extensionProcessIds) {
+        try {
+            os::updateSpawnedProcess({processId, "exit"});
+        }
+        catch(...) {
+            // Ignore errors during cleanup - process might already be dead
+        }
+    }
+    
+    extensionProcessIds.clear();
+    loadedExtensions.clear();
+    initialized = false;
 }
 
 } // namespace extensions
