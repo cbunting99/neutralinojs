@@ -1,9 +1,18 @@
 #include <cstdlib>
 #include <string>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <csignal>
+#include <atomic>
+#include <chrono>
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <websocketpp/error.hpp>
+#include <windows.h>
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+#include <signal.h>
+#include <unistd.h>
 #endif
 
 #include "lib/json/json.hpp"
@@ -34,9 +43,49 @@ using json = nlohmann::json;
 
 string navigationUrl = "";
 
+// Global shutdown variables
+atomic<bool> shouldShutdown(false);
+mutex shutdownMutex;
+condition_variable shutdownCV;
+
+#if defined(_WIN32)
+BOOL WINAPI consoleHandler(DWORD signal) {
+    switch(signal) {
+        case CTRL_C_EVENT:
+        case CTRL_BREAK_EVENT:
+        case CTRL_CLOSE_EVENT:
+        case CTRL_SHUTDOWN_EVENT:
+            shouldShutdown = true;
+            shutdownCV.notify_all();
+            // Give time for cleanup
+            app::exit(0);
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
+#endif
+
+void signalHandler(int signal) {
+#if defined(_WIN32)
+    if (signal == SIGINT || signal == SIGTERM || signal == SIGBREAK) {
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+    if (signal == SIGINT || signal == SIGTERM) {
+#endif
+        shouldShutdown = true;
+        shutdownCV.notify_all();
+        // Call app exit for proper cleanup
+        app::exit(0);
+    }
+}
+
 void __wait() {
-    while(true) {
-        this_thread::sleep_for(20000ms);
+    unique_lock<mutex> lock(shutdownMutex);
+    shutdownCV.wait_for(lock, std::chrono::seconds(1), [] { return shouldShutdown.load(); });
+    
+    // Check periodically for shutdown signal with timeout
+    while(!shouldShutdown.load()) {
+        shutdownCV.wait_for(lock, std::chrono::seconds(1), [] { return shouldShutdown.load(); });
     }
 }
 
@@ -182,18 +231,32 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 #define CONVWCSTR(S) S
 int main(int argc, char ** argv)
 #endif
-                                 {
+{
     json args;
     for (int i = 0; i < ARG_C; i++) {
         args.push_back(CONVWCSTR(ARG_V[i]));
     }
-    #if defined(_WIN32)
+      // Register signal handlers for graceful shutdown
+#if defined(_WIN32)
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+    signal(SIGBREAK, signalHandler);
+    // Register console control handler for Windows
+    SetConsoleCtrlHandler(consoleHandler, TRUE);
     __attachConsole();
-    #endif
+#elif defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
+    signal(SIGPIPE, SIG_IGN); // Ignore broken pipe signals
+#endif
+    
     __initFramework(args);
     __startServerAsync();
     __configureLogger();
     __initExtra();
     __startApp();
+    
+    // Ensure proper cleanup on exit
+    app::exit(0);
     return 0;
 }
