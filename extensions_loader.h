@@ -16,6 +16,7 @@ void loadOne(const string &extensionId);
 vector<string> getLoaded();
 bool isLoaded(const string &extensionId);
 bool isInitialized();
+void cleanup(); // Add cleanup function for extension processes
 
 } // namesapce extensions
 
