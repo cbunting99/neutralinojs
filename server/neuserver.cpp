@@ -6,6 +6,7 @@
 #include <thread>
 #include <chrono>
 #include <set>
+#include <future>
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -34,6 +35,7 @@ namespace neuserver {
 websocketserver *server;
 wsclientsSet appConnections;
 wsclientsMap extConnections;
+thread *serverThread = nullptr;
 
 bool initialized = false;
 bool applyConfigHeaders = false;
@@ -159,12 +161,83 @@ bool isInitialized() {
 }
 
 void startAsync() {
-    thread serverThread([&](){ server->run(); });
-    serverThread.detach();
+    if (serverThread) {
+        return; // Already started
+    }
+    serverThread = new thread([&](){ server->run(); });
 }
 
 void stop() {
-    server->stop_listening();
+    if (!initialized || !server) {
+        return;
+    }
+    
+    debug::log(debug::LogTypeInfo, "Starting server shutdown...");
+    
+    // Stop listening for new connections
+    try {
+        server->stop_listening();
+    } catch (...) {
+        // Ignore errors during stop_listening
+    }
+    
+    // Close all existing connections gracefully with timeout
+    auto closeConnections = [&]() {
+        for (const auto &connection: appConnections) {
+            try {
+                server->close(connection, websocketpp::close::status::going_away, "Server shutdown");
+            } catch (...) {
+                // Ignore errors during shutdown
+            }
+        }
+        
+        for (const auto &[_, connection]: extConnections) {
+            try {
+                server->close(connection, websocketpp::close::status::going_away, "Server shutdown");
+            } catch (...) {
+                // Ignore errors during shutdown
+            }
+        }
+    };
+    
+    closeConnections();
+    
+    // Give connections time to close gracefully
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    
+    // Clear connection containers
+    appConnections.clear();
+    extConnections.clear();
+    
+    // Stop the server with timeout
+    try {
+        server->stop();
+    } catch (...) {
+        // Ignore errors during stop
+    }
+    
+    // Wait for server thread to finish with timeout
+    if (serverThread && serverThread->joinable()) {
+        // Try to join with timeout
+        auto future = std::async(std::launch::async, [&]() {
+            serverThread->join();
+        });
+        
+        if (future.wait_for(std::chrono::seconds(2)) == std::future_status::timeout) {
+            debug::log(debug::LogTypeWarning, "Server thread join timeout, forcing termination");
+            // Thread didn't finish in time, but we'll still clean up
+        }
+        
+        delete serverThread;
+        serverThread = nullptr;
+    }
+    
+    // Clean up server instance
+    delete server;
+    server = nullptr;
+    initialized = false;
+    
+    debug::log(debug::LogTypeInfo, "Server shutdown complete");
 }
 
 void handleMessage(websocketpp::connection_hdl handler, websocketserver::message_ptr msg) {

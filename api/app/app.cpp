@@ -1,5 +1,7 @@
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <thread>
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #include <signal.h>
@@ -18,6 +20,8 @@
 #include "api/app/app.h"
 #include "api/window/window.h"
 #include "api/os/os.h"
+#include "extensions_loader.h"
+#include "api/os/os.h"
 #include "api/events/events.h"
 
 using namespace std;
@@ -26,16 +30,37 @@ using json = nlohmann::json;
 namespace app {
 
 void exit(int code) {
-    if(neuserver::isInitialized()) {
-        neuserver::stop();
-    }
-    if(settings::getMode() == settings::AppModeWindow) {
+    try {
+        // Cleanup extensions first
+        if(extensions::isInitialized()) {
+            extensions::cleanup();
+        }
+        
+        // Cleanup spawned processes
+        os::cleanupAllSpawnedProcesses();
+        
+        // Clean up server
+        if(neuserver::isInitialized()) {
+            neuserver::stop();
+        }
+        
+        // Clean up tray
         if(os::isTrayInitialized()) {
             os::cleanupTray();
         }
-        window::_close(code);
+        
+        // Clean up window and exit
+        if(settings::getMode() == settings::AppModeWindow) {
+            window::_close(code);
+        }
+        else {
+            // Give a brief moment for cleanup to complete
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::exit(code);
+        }
     }
-    else {
+    catch(...) {
+        // If cleanup fails, force exit to prevent hanging
         std::exit(code);
     }
 }

@@ -36,6 +36,7 @@ struct ChildProcessOptions {
 
 bool isTrayInitialized();
 void cleanupTray();
+void cleanupSpawnedProcesses(); // Add cleanup function for spawned processes
 void open(const string &url);
 os::CommandResult execCommand(string command, const os::ChildProcessOptions &options = {});
 pair<int, int> spawnProcess(string command, const os::ChildProcessOptions &options = {});

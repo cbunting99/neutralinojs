@@ -14,6 +14,8 @@
 #include <filesystem>
 #include <functional>
 #include <atomic>
+#include <chrono>
+#include <thread>
 #include <climits>
 
 #include "resources.h"
@@ -231,6 +233,48 @@ bool updateSpawnedProcess(const os::SpawnedProcessEvent &evt) {
     }
 
     return true;
+}
+
+void cleanupSpawnedProcesses() {
+    lock_guard<mutex> guard(spawnedProcessesLock);
+    
+    // Terminate all spawned processes with a timeout
+    vector<thread> terminationThreads;
+    
+    for(auto& [virtualPid, childProcess] : spawnedProcesses) {
+        terminationThreads.emplace_back([virtualPid, childProcess]() {
+            try {
+                // Force kill the process
+                childProcess->kill(true);
+                
+                // Wait briefly for process to terminate
+                int exitCode;
+                auto start = chrono::steady_clock::now();
+                while(!childProcess->try_get_exit_status(exitCode)) {
+                    if(chrono::steady_clock::now() - start > chrono::milliseconds(1000)) {
+                        break; // Timeout after 1 second
+                    }
+                    this_thread::sleep_for(chrono::milliseconds(10));
+                }
+            }
+            catch(...) {
+                // Ignore errors during cleanup
+            }
+        });
+    }
+    
+    // Wait for all termination threads to complete with timeout
+    for(auto& t : terminationThreads) {
+        if(t.joinable()) {
+            t.join();
+        }
+    }
+    
+    // Clean up process map
+    for(auto& [virtualPid, childProcess] : spawnedProcesses) {
+        delete childProcess;
+    }
+    spawnedProcesses.clear();
 }
 
 string getPath(const string &name) {

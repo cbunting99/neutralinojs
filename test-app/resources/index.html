@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Shutdown Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="neutralinoapp">
+        <h1>Neutralinojs Shutdown Test</h1>
+        <div id="info"></div>
+        <div class="buttons">
+            <button onclick="testSpawnProcess()">Spawn Test Process</button>
+            <button onclick="testExtension()">Test Extension</button>
+            <button onclick="getSpawnedProcesses()">List Processes</button>
+            <button onclick="exitApp()">Exit App</button>
+        </div>
+        <div id="log"></div>
+    </div>
+
+    <script src="js/neutralino.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
