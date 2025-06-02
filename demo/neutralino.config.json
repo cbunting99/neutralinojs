@@ -1,0 +1,46 @@
+{
+    "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
+    "applicationId": "js.neutralino.shutdowndemo",
+    "version": "1.0.0",
+    "defaultMode": "window",
+    "port": 0,
+    "url": "/",
+    "documentRoot": "/resources/",
+    "enableServer": true,
+    "tokenSecurity": "one-time",
+    "enableNativeAPI": true,
+    "exportAuthInfo": false,
+    "logging": {
+        "enabled": true,
+        "writeToLogFile": true
+    },
+    "nativeBlockList": [],
+    "globalVariables": {
+        "DEMO_VERSION": "1.0.0",
+        "SHUTDOWN_DEMO": true
+    },
+    "modes": {
+        "window": {
+            "title": "Neutralino Shutdown Demo",
+            "width": 900,
+            "height": 700,
+            "minWidth": 800,
+            "minHeight": 600,
+            "center": true,
+            "fullScreen": false,
+            "alwaysOnTop": false,
+            "icon": "/resources/icons/appIcon.png",
+            "enableInspector": true,
+            "borderless": false,
+            "maximize": false,
+            "hidden": false,
+            "resizable": true,
+            "exitProcessOnClose": true
+        }
+    },
+    "cli": {
+        "binaryName": "shutdown-demo",
+        "resourcesPath": "/resources/",
+        "clientLibrary": "/resources/js/neutralino.js"
+    }
+}

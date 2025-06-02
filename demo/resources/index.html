@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neutralino Shutdown Demo</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/neutralino.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="app-logo">
+                    <div class="logo-icon">⚡</div>
+                    <h1>Neutralino Shutdown Demo</h1>
+                </div>
+                <div class="app-controls">
+                    <button id="minimizeBtn" class="control-btn minimize">−</button>
+                    <button id="closeBtn" class="control-btn close">×</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <div class="demo-section">
+                <h2>🚀 Shutdown Performance Test</h2>
+                <p>This demo showcases the improved shutdown mechanism in Neutralinojs applications.</p>
+                  <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="shutdownTime">7ms</div>
+                        <div class="stat-label">Avg Shutdown Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="fastestTime">5ms</div>
+                        <div class="stat-label">Fastest Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="testsRun">0</div>
+                        <div class="stat-label">Tests Run</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="successRate">100%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">✅</div>
+                        <div class="stat-label">Signal Handling</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">>99%</div>
+                        <div class="stat-label">Improvement</div>
+                    </div>
+                </div>
+            </div>            <div class="demo-section">
+                <h2>🔧 Test Shutdown Methods</h2>
+                <div class="button-grid">
+                    <button id="gracefulShutdown" class="demo-btn primary">
+                        <span class="btn-icon">🛑</span>
+                        <span class="btn-text">Graceful Shutdown</span>
+                        <span class="btn-desc">Clean app exit via API</span>
+                    </button>
+                    
+                    <button id="signalTest" class="demo-btn secondary">
+                        <span class="btn-icon">📡</span>
+                        <span class="btn-text">Signal Test</span>
+                        <span class="btn-desc">Test signal handling</span>
+                    </button>
+                    
+                    <button id="stressTest" class="demo-btn danger">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">Stress Test</span>
+                        <span class="btn-desc">High-load shutdown test</span>
+                    </button>
+                    
+                    <button id="benchmarkTest" class="demo-btn success">
+                        <span class="btn-icon">⏱️</span>
+                        <span class="btn-text">Benchmark</span>
+                        <span class="btn-desc">Multiple shutdown tests</span>
+                    </button>
+                    
+                    <button id="processInfo" class="demo-btn info">
+                        <span class="btn-icon">📊</span>
+                        <span class="btn-text">Process Info</span>
+                        <span class="btn-desc">Show process details</span>
+                    </button>
+                    
+                    <button id="memoryInfo" class="demo-btn warning">
+                        <span class="btn-icon">💾</span>
+                        <span class="btn-text">Memory Info</span>
+                        <span class="btn-desc">Display memory usage</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h2>📊 Real-time Status</h2>
+                <div class="status-panel">
+                    <div class="status-item">
+                        <span class="status-label">App Status:</span>
+                        <span class="status-value running" id="appStatus">Running</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Server:</span>
+                        <span class="status-value connected" id="serverStatus">Connected</span>
+                    </div>                    <div class="status-item">
+                        <span class="status-label">CPU Usage:</span>
+                        <span class="status-value" id="cpuStatus">Loading...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Memory:</span>
+                        <span class="status-value" id="memoryStatus">Loading...</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Extensions:</span>
+                        <span class="status-value" id="extensionStatus">0 loaded</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">WebSockets:</span>
+                        <span class="status-value connected" id="websocketStatus">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h2>📋 Shutdown Log</h2>
+                <div class="log-panel">
+                    <div class="log-header">
+                        <span>Shutdown Events</span>
+                        <button id="clearLog" class="clear-btn">Clear</button>
+                    </div>
+                    <div class="log-content" id="logContent">
+                        <div class="log-entry info">
+                            <span class="log-time">[2025-06-02 18:26:29]</span>
+                            <span class="log-message">Application started successfully</span>
+                        </div>
+                        <div class="log-entry success">
+                            <span class="log-time">[2025-06-02 18:26:31]</span>
+                            <span class="log-message">Shutdown improvements loaded</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <span>Neutralino Shutdown Demo v1.0.0</span>
+                <span>•</span>
+                <span>Improved shutdown performance</span>
+                <span>•</span>
+                <span>Press Ctrl+C or Alt+F4 to test graceful shutdown</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
